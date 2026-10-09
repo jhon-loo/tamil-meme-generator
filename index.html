@@ -1,1 +1,56 @@
-
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tamil Meme Studio</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#10131b;color:#f7f7fb;font-family:system-ui,-apple-system,sans-serif;padding:16px}
+h1{font-size:25px;margin:4px 0}p{color:#b9bfd0;margin-top:6px}.card{background:#1b202b;border:1px solid #343b4a;border-radius:16px;padding:15px;margin:14px 0}
+label{display:block;font-weight:650;margin:12px 0 6px}input,textarea,select,button{font:inherit}input[type=file],textarea,select,input[type=text],input[type=color],input[type=range]{width:100%;padding:11px;border-radius:10px;border:1px solid #41495a;background:#10141d;color:white}
+textarea{min-height:88px;resize:vertical}button{border:0;border-radius:11px;padding:12px 15px;background:#ffcf58;color:#171717;font-weight:750;width:100%;margin-top:12px}
+#preview{width:100%;max-width:420px;display:block;margin:0 auto;border-radius:12px;background:#242936}
+.small{font-size:13px;color:#adb4c4}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+</style>
+</head>
+<body>
+<h1>🎭 Tamil Meme Studio</h1>
+<p>Upload your characters, add exact Tamil/Tanglish text, and download a 9:16 meme PNG.</p>
+<div class="card">
+<label>Boy character image (optional)</label><input id="boy" type="file" accept="image/*">
+<label>Girl character image (optional)</label><input id="girl" type="file" accept="image/*">
+<label>Top text</label><textarea id="top" placeholder="Example: Naa unga veetuku vantha..."></textarea>
+<label>Bottom text</label><textarea id="bottom" placeholder="Example: Enna saapadu poduvinga? 😂"></textarea>
+<div class="row"><div><label>Background</label><input id="bg" type="color" value="#fff0d7"></div><div><label>Text colour</label><input id="fg" type="color" value="#171717"></div></div>
+<label>Text size</label><input id="size" type="range" min="28" max="68" value="44">
+<label>Layout</label><select id="layout"><option value="both">Boy + Girl</option><option value="boy">Boy only</option><option value="girl">Girl only</option><option value="text">Text only</option></select>
+<button id="refresh">Update preview</button>
+<button id="download">Download meme PNG (1080 × 1920)</button>
+<p class="small">Tip: text is drawn separately on the canvas, so you can check spelling before exporting. This version combines your uploaded images and text; it does not create new AI character poses.</p>
+</div>
+<div class="card"><canvas id="preview" width="540" height="960"></canvas></div>
+<script>
+const $=id=>document.getElementById(id), canvas=$('preview'),ctx=canvas.getContext('2d');
+let imgs={boy:null,girl:null};
+function loadImage(input,key){input.addEventListener('change',()=>{const f=input.files[0];if(!f)return;const im=new Image();im.onload=()=>{imgs[key]=im;draw()};im.src=URL.createObjectURL(f)})}
+loadImage($('boy'),'boy');loadImage($('girl'),'girl');
+['top','bottom','bg','fg','size','layout'].forEach(id=>$(id).addEventListener('input',draw));
+function wrapText(text,maxWidth,fontSize){ctx.font=`800 ${fontSize}px system-ui, sans-serif`;let lines=[];for(const para of text.split('\n')){let words=para.split(' '),line='';for(const word of words){let test=line?line+' '+word:word;if(ctx.measureText(test).width>maxWidth&&line){lines.push(line);line=word}else line=test}lines.push(line)}return lines}
+function drawImageContain(im,x,y,w,h){if(!im)return;let scale=Math.min(w/im.width,h/im.height);let iw=im.width*scale,ih=im.height*scale;ctx.drawImage(im,x+(w-iw)/2,y+(h-ih)/2,iw,ih)}
+function draw(){const W=540,H=960;ctx.clearRect(0,0,W,H);ctx.fillStyle=$('bg').value;ctx.fillRect(0,0,W,H);
+ctx.fillStyle='rgba(255,255,255,.45)';ctx.beginPath();ctx.roundRect(22,22,W-44,H-44,24);ctx.fill();
+let top=$('top').value,bottom=$('bottom').value,fs=+$('size').value;
+ctx.fillStyle=$('fg').value;ctx.textAlign='center';ctx.textBaseline='middle';
+let lines=wrapText(top,450,fs);let lineH=fs*1.22;let startY=85;lines.forEach((line,i)=>{ctx.font=`900 ${fs}px system-ui, sans-serif`;ctx.fillText(line,W/2,startY+i*lineH,460)});
+let mode=$('layout').value;let areaY=235,areaH=490;
+if(mode==='boy')drawImageContain(imgs.boy,45,areaY,450,areaH);
+else if(mode==='girl')drawImageContain(imgs.girl,45,areaY,450,areaH);
+else if(mode==='both'){drawImageContain(imgs.boy,25,areaY,245,areaH);drawImageContain(imgs.girl,270,areaY,245,areaH)}
+let bLines=wrapText(bottom,450,fs);let by=790-(bLines.length-1)*lineH/2;bLines.forEach((line,i)=>{ctx.font=`900 ${fs}px system-ui, sans-serif`;ctx.fillText(line,W/2,by+i*lineH,460)});
+ctx.font='700 16px system-ui,sans-serif';ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillText('TAMIL MEME STUDIO',W/2,916);
+}
+$('refresh').onclick=draw;
+$('download').onclick=()=>{const out=document.createElement('canvas');out.width=1080;out.height=1920;const c=out.getContext('2d');c.drawImage(canvas,0,0,1080,1920);const a=document.createElement('a');a.download='tamil-meme.png';a.href=out.toDataURL('image/png');a.click()};
+draw();
+</script>
+</body></html>
